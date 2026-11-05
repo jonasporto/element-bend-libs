@@ -1,4 +1,4 @@
-# An HTML parser as the HTML Standard: the tokenizer, tree construction, entities, serialization. Apache-2.0.
+# An HTML parser as the HTML Standard: the tokenizer, tree construction, entities, serialization. Apache-2.0. Source: https://github.com/jonasporto/element-bend-libs/tree/main/packages/element-html
 import Base
 import ./dom.bend as Dom
 import ./entity_table.bend as Entity_table

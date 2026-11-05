@@ -1,4 +1,4 @@
-# SHA-1/2, HMAC, HKDF, AES-128-GCM, ChaCha20-Poly1305, X25519, P-256 ECDH, ECDSA and RSA verification. Apache-2.0.
+# SHA-1/2, HMAC, HKDF, AES-128-GCM, ChaCha20-Poly1305, X25519, P-256 ECDH, ECDSA and RSA verification. Apache-2.0. Source: https://github.com/jonasporto/element-bend-libs/tree/main/packages/element-crypto
 import Base
 import ./sha256.bend as Sha256
 import ./sha512.bend as Sha512
