@@ -10,6 +10,7 @@ import ./aes.bend as Aes
 import ./chacha20.bend as Chacha20
 import ./poly1305.bend as Poly1305
 import ./gcm.bend as Gcm
+import ./fe25519.bend as Fe25519
 import ./x25519.bend as X25519
 import ./ecdsa.bend as Ecdsa
 import ./ecdh.bend as Ecdh

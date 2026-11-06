@@ -1,4 +1,5 @@
 import Base
+import ./fe25519.bend as F
 
 # X25519 (RFC 7748 section 5): Diffie-Hellman on Curve25519, the key
 # exchange of TLS 1.3. Scalars and u-coordinates are 32 bytes, little-endian.
@@ -207,8 +208,70 @@ def result(st: L4) -> List<&2, U32>:
     case L4{x2, +z2, x3, z3}:
       freeze(mul(x2, invert(z2)))
 
+# ---- the ladder over fe25519 (20 limbs of 13 bits in a record of U32) ------------
+# RFC 7748 section 5's Montgomery ladder. The swap is a mask (F.cswap), so no
+# branch reads a secret bit; the scalar's bits are walked top first.
+
+type L5 is Data:
+  L5{x2: F.Fe, z2: F.Fe, x3: F.Fe, z3: F.Fe, swap: U32}
+
+def scalar_bits(+k: List<&2, U32>, n: Nat, +t: U32, +acc: List<&2, U32>) -> List<&2, U32>:
+  match n:
+    case 0n:
+      acc
+    case 1n+r:
+      scalar_bits(k, r, (t + 1 : U32), bit_at(k, t) <> acc)
+
+def rung_fe(xs: F.Fe & F.Fe, zs: F.Fe & F.Fe, +x1: F.Fe, +b: U32) -> L5:
+  match xs:
+    case (+x2, +x3):
+      match zs:
+        case (+z2, +z3):
+          +a = F.add(x2, z2)
+          +aa = F.sq(a)
+          +bm = F.sub(x2, z2)
+          +bb = F.sq(bm)
+          +e = F.sub(aa, bb)
+          +c = F.add(x3, z3)
+          +d = F.sub(x3, z3)
+          +da = F.mul(d, a)
+          +cb = F.mul(c, bm)
+          L5{F.mul(aa, bb), F.mul(e, F.add(aa, F.mul_small(e, 121665))), F.sq(F.add(da, cb)), F.mul(x1, F.sq(F.sub(da, cb))), b}
+
+def step_fe(st: L5, +x1: F.Fe, +b: U32) -> L5:
+  match st:
+    case L5{x2, z2, x3, z3, swap}:
+      +s = U32.xor(swap, b)
+      rung_fe(F.cswap(s, x2, x3), F.cswap(s, z2, z3), x1, b)
+
+def ladder_fe(bits: List<&2, U32>, +x1: F.Fe, st: L5) -> L5:
+  match bits:
+    case Nil{}:
+      st
+    case Con{b, t}:
+      ladder_fe(t, x1, step_fe(st, x1, b))
+
+def finish_fe(xs: F.Fe & F.Fe, zs: F.Fe & F.Fe) -> List<&2, U32>:
+  match xs:
+    case (x2, x3):
+      match zs:
+        case (+z2, z3):
+          F.to_bytes(F.mul(x2, F.inv(z2)))
+
+def result_fe(st: L5) -> List<&2, U32>:
+  match st:
+    case L5{x2, z2, x3, z3, +swap}:
+      finish_fe(F.cswap(swap, x2, x3), F.cswap(swap, z2, z3))
+
 # X25519(k, u): both 32 bytes little-endian; the top bit of u is ignored.
 def x25519(+k: List<&2, U32>, +u: List<&2, U32>) -> List<&2, U32>:
+  +x1 = F.of_bytes(u)
+  +bits = scalar_bits(clamp(k), 255n, 0, Nil{})
+  result_fe(ladder_fe(bits, x1, L5{F.one(), F.zero(), x1, F.one(), 0}))
+
+# The list-limb ladder this replaced (2026-11-05), kept for the differential
+# test in crypto_vectors until the fe25519 one has run in Element for a while.
+def x25519_list(+k: List<&2, U32>, +u: List<&2, U32>) -> List<&2, U32>:
   +x1 = List.append(&2, U32, List.take(&2, U32, u, 31n), [U32.and(nth(u, 31n), 127)])
   result(ladder(255n, clamp(k), x1, 254, 0, L4{one(), zeros(32n), x1, one()}))
 

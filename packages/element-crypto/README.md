@@ -24,6 +24,7 @@ anything specific to it.
 - `chacha20.bend`
 - `poly1305.bend`
 - `gcm.bend`
+- `fe25519.bend`
 - `x25519.bend`
 - `ecdsa.bend`
 - `ecdh.bend`
