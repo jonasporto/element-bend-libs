@@ -24,6 +24,13 @@ anything specific to it.
 
 Pure Bend: no `.c` or `.js` files.
 
+## Laws
+
+`LAWS.bend` holds 2 laws over this package, closed equalities from the
+standards it follows; `bend PROOF.bend` in this directory checks them. They
+are not imported by `package.bend`, so importing the package does not check
+them again. Laws for every input are the next phase (F = 2).
+
 ## Versions
 
 `0.F.A.N`. The first number stays 0. `F` is the phase: 1 runs inside

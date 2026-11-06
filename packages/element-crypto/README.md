@@ -50,6 +50,13 @@ Pure Bend: no `.c` or `.js` files.
   its published AES-GCM is about 2x faster than ours. Our X25519 (fe25519,
   20 limbs of 13 bits) is about 190x faster than its published one.
 
+## Laws
+
+`LAWS.bend` holds 3 laws over this package, closed equalities from the
+standards it follows; `bend PROOF.bend` in this directory checks them. They
+are not imported by `package.bend`, so importing the package does not check
+them again. Laws for every input are the next phase (F = 2).
+
 ## Versions
 
 `0.F.A.N`. The first number stays 0. `F` is the phase: 1 runs inside
