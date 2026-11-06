@@ -3,8 +3,11 @@
 Signed 32-bit comparisons and printing on U32 (two's complement).
 
 ```bend
-import element-ints@0.1.0.0/package.bend as Ints
+import element-ints@0.1.0.0/signed.bend as Signed
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

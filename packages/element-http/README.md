@@ -3,8 +3,11 @@
 HTTP/1.1 client over TCP and TLS: requests, chunked bodies, gzip, redirects, cookies, DNS.
 
 ```bend
-import element-http@0.1.0.0/package.bend as Http
+import element-http@0.1.0.0/fetch.bend as Fetch
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.
@@ -22,7 +25,7 @@ anything specific to it.
 ## Depends on
 
 - `element-asn1@0.1.0.0`
-- `element-compress@0.1.0.0`
+- `element-compress@0.1.0.1`
 - `element-crypto@0.1.0.0`
 - `element-hostio@0.1.0.0`
 - `element-rfc3986@0.1.0.0`

@@ -1,4 +1,5 @@
 import Base
+import element-crypto@0.1.0.0/suite.bend as Suite
 import ./tls13.bend as T
 import ./tls12.bend as T12
 import element-crypto@0.1.0.0/x25519.bend as X
@@ -10,15 +11,15 @@ import element-x509@0.1.0.0/cert.bend as X509
 # pure state machine ("sans-IO"): `start` gives the
 # first flight, `feed` takes bytes from the network and returns the next
 # state, whose `send` holds bytes to write and whose `out` holds decrypted
-# application data. lib/tls/io.bend runs it over a socket.
+# application data. tls/io.bend runs it over a socket.
 #
 # Handshake: ClientHello -> ServerHello (x25519 + ChaCha20-Poly1305 only)
 # -> EncryptedExtensions, Certificate, CertificateVerify, Finished (checked)
 # -> client Finished + the request. At CertificateVerify the server is
-# authenticated (lib/x509): the chain must reach a trusted root and name the
+# authenticated (x509): the chain must reach a trusted root and name the
 # host, and the signature over the transcript must verify with the leaf key.
 
-# TLS 1.2 (lib/tls/tls12.bend), between ServerHello and application data:
+# TLS 1.2 (tls/tls12.bend), between ServerHello and application data:
 # the suite, the server random, the server's ECDHE key (empty until
 # ServerKeyExchange), whether the server echoed extended_master_secret, the
 # master secret (empty until ServerHelloDone), whether ChangeCipherSpec came.
@@ -75,7 +76,7 @@ def key_len_of(k: Keys) -> U32:
 # rnd: 96 random bytes (32 random, 32 session id, 32 x25519 private key).
 def start(+trust: Trust, +host: String, +rnd: List<&2, U32>, +req: List<&2, U32>) -> Cs:
   +priv = T.slice(rnd, 64, 32)
-  +ch = T.client_hello(host, T.slice(rnd, 0, 32), T.slice(rnd, 32, 32), X.public_key(priv))
+  +ch = T.client_hello(host, T.slice(rnd, 0, 32), T.slice(rnd, 32, 32), Suite.x25519_public(priv))
   Cs{PAwait{}, priv, ch, Nil{}, Nil{}, Sec{Nil{}, Nil{}, Nil{}}, no_keys(), req, Nil{}, T.record(22, ch), Nil{}, trust, 0}
 
 def fail(+msg: String) -> Phase:
@@ -132,7 +133,7 @@ def out_of(st: Cs) -> List<&2, U32>:
       List.concat(&2, U32, List.reverse(&2, List<&2, U32>, out))
 
 # Another request on a session whose last response was whole (keep-alive,
-# lib/tls/io.bend's pool): sealed as `finish` sealed the first, with the
+# tls/io.bend's pool): sealed as `finish` sealed the first, with the
 # write key at its next sequence number (TLS 1.3 or 1.2 records); the
 # plaintext read so far is dropped, the next response starts empty.
 def seal_app(p: Phase, +k: List<&2, U32>, +iv: List<&2, U32>, +seq: U32, +req: List<&2, U32>) -> List<&2, U32>:
@@ -188,7 +189,7 @@ def on_sh_shared(m: Maybe<&2, List<&2, U32>>, st: Cs, +sh: List<&2, U32>) -> Cs:
 def on_sh_ok(st: Cs, +sh: List<&2, U32>) -> Cs:
   match st:
     case Cs{phase, +priv, +tr, buf, hsbuf, hs, keys, req, out, send, certs, trust, outn}:
-      on_sh_shared(X.shared(priv, T.sh_key_share(sh)), Cs{phase, priv, tr, buf, hsbuf, hs, keys, req, out, send, certs, trust, outn}, sh)
+      on_sh_shared(Suite.x25519_shared(priv, T.sh_key_share(sh)), Cs{phase, priv, tr, buf, hsbuf, hs, keys, req, out, send, certs, trust, outn}, sh)
 
 def on_sh_check(ok: Bool, st: Cs, +sh: List<&2, U32>, +why: String) -> Cs:
   match ok:
@@ -224,7 +225,7 @@ def has_msg(m: T.Msgs) -> Bool:
 # ---- encrypted handshake --------------------------------------------------------------
 
 def verify_ok(+got: List<&2, U32>, +want: List<&2, U32>) -> Bool:
-  Poly.eq_bytes(got, want)
+  Suite.eq_bytes(got, want)
 
 # Server Finished verified: derive application secrets, send the client
 # Finished (after a compatibility ChangeCipherSpec) and the request.
@@ -544,21 +545,21 @@ def on_ske_problem(+why: String, +st: Cs, +m: List<&2, U32>) -> Cs:
   ske_then(String.is_empty(why), why, st, m)
 
 # The key exchange follows the server's key, as the AEAD follows the key
-# length: a 65-byte point is P-256 (lib/crypto/ecdh.bend), 32 bytes x25519.
+# length: a 65-byte point is P-256 (crypto/ecdh.bend), 32 bytes x25519.
 # The P-256 scalar is derived from the same 32 secret bytes under a label.
 def pms_of(p256: Bool, +priv: List<&2, U32>, +spub: List<&2, U32>) -> Maybe<&2, List<&2, U32>>:
   match p256:
     case True{}:
       Ecdh.shared(priv, spub)
     case False{}:
-      X.shared(priv, spub)
+      Suite.x25519_shared(priv, spub)
 
 def ecdhe_pub(p256: Bool, +priv: List<&2, U32>) -> List<&2, U32>:
   match p256:
     case True{}:
       Ecdh.public_key(priv)
     case False{}:
-      X.public_key(priv)
+      Suite.x25519_public(priv)
 
 def flight_go(m: Maybe<&2, List<&2, U32>>, +pub: List<&2, U32>, +suite: U32, +sr: List<&2, U32>, +spub: List<&2, U32>, +ems: Bool, +priv: List<&2, U32>, +tr: List<&2, U32>, buf: List<&2, U32>, hsbuf: List<&2, U32>, hs: Sec, req: List<&2, U32>, out: List<&2, List<&2, U32>>, +send: List<&2, U32>, certs: List<&2, U32>, trust: Trust, outn: U32, +shd: List<&2, U32>) -> Cs:
   match m:

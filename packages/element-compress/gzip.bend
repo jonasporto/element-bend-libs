@@ -6,7 +6,7 @@ import ./checksum.bend as Ck
 # the header is read and checked, the stream inflated, the trailer's
 # checksum and size compared with what came out. A mismatch is a Fail, never
 # a body shown as text. CRC-32 and Adler-32 are the PNG encoder's
-# (lib/image/png.bend, with laws in lib/LAWS.bend).
+# (image/png.bend, with laws in LAWS.bend).
 #
 # `decode` is what HTTP needs: a Content-Encoding and the body bytes.
 

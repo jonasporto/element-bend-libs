@@ -3,8 +3,11 @@
 URLs as RFC 3986: parse, resolve against a base, remove dot segments, recompose.
 
 ```bend
-import element-rfc3986@0.1.0.0/package.bend as Rfc3986
+import element-rfc3986@0.1.0.0/url.bend as Url
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

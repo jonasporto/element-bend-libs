@@ -1,4 +1,5 @@
 import Base
+import element-crypto@0.1.0.0/suite.bend as Suite
 import element-crypto@0.1.0.0/sha256.bend as Sha256
 import element-crypto@0.1.0.0/hmac.bend as Hmac
 import element-crypto@0.1.0.0/chacha20.bend as ChaCha
@@ -9,7 +10,7 @@ import element-crypto@0.1.0.0/x25519.bend as X
 # TLS 1.3 (RFC 8446), the pure half: wire encoding, the key schedule, the
 # ClientHello, ServerHello parsing, record protection and Finished.
 # Two TLS 1.3 suites, both SHA-256: TLS_AES_128_GCM_SHA256 (0x1301, which RFC 8446
-# 9.1 requires a client to offer; five sites of the real-sites bench refused
+# 9.1 requires a client to offer; five real sites refused
 # a hello without it) offered first, as Chrome does, and also the faster in
 # Bend (bench aead_gcm: 40 ms per 100 KB against 90 for ChaCha20-Poly1305),
 # then TLS_CHACHA20_POLY1305_SHA256 (0x1303). x25519 only.
@@ -60,24 +61,24 @@ def ascii(s: String) -> List<&2, U32>:
   Sha256.bytes_of(s)
 
 def hash(+xs: List<&2, U32>) -> List<&2, U32>:
-  Sha256.digest(xs)
+  Suite.digest(xs)
 
 # ---- key schedule (7.1) ----------------------------------------------------------
 
 def expand_label(+secret: List<&2, U32>, +label: String, +ctx: List<&2, U32>, +n: U32) -> List<&2, U32>:
-  Hmac.expand(secret, cat([u16(n), vec8(ascii("tls13 " ++ label)), vec8(ctx)]), n)
+  Suite.expand(secret, cat([u16(n), vec8(ascii("tls13 " ++ label)), vec8(ctx)]), n)
 
 def derive_secret(+secret: List<&2, U32>, +label: String, +transcript: List<&2, U32>) -> List<&2, U32>:
   expand_label(secret, label, hash(transcript), 32)
 
 def early_secret() -> List<&2, U32>:
-  Hmac.extract(zeros(32n), zeros(32n))
+  Suite.extract(zeros(32n), zeros(32n))
 
 def handshake_secret(+ecdhe: List<&2, U32>) -> List<&2, U32>:
-  Hmac.extract(derive_secret(early_secret(), "derived", Nil{}), ecdhe)
+  Suite.extract(derive_secret(early_secret(), "derived", Nil{}), ecdhe)
 
 def master_secret(+hs: List<&2, U32>) -> List<&2, U32>:
-  Hmac.extract(derive_secret(hs, "derived", Nil{}), zeros(32n))
+  Suite.extract(derive_secret(hs, "derived", Nil{}), zeros(32n))
 
 def traffic_key(+secret: List<&2, U32>, +n: U32) -> List<&2, U32>:
   expand_label(secret, "key", Nil{}, n)
@@ -87,7 +88,7 @@ def traffic_iv(+secret: List<&2, U32>) -> List<&2, U32>:
 
 # Finished (4.4.4): HMAC over the transcript hash with the "finished" key.
 def verify_data(+base: List<&2, U32>, +transcript: List<&2, U32>) -> List<&2, U32>:
-  Hmac.hmac(expand_label(base, "finished", Nil{}, 32), hash(transcript))
+  Suite.hmac(expand_label(base, "finished", Nil{}, 32), hash(transcript))
 
 # ---- handshake messages ------------------------------------------------------------
 
@@ -98,9 +99,9 @@ def ext(+typ: U32, +body: List<&2, U32>) -> List<&2, U32>:
   cat([u16(typ), vec16(body)])
 
 # ClientHello (4.1.2) offering TLS 1.3, then TLS 1.2 for servers that speak
-# nothing newer (lib/tls/tls12.bend), x25519 only. Suites: AES-128-GCM then
+# nothing newer (tls/tls12.bend), x25519 only. Suites: AES-128-GCM then
 # ChaCha20-Poly1305 for 1.3; ECDHE with the same two AEADs for 1.2.
-# Signature algorithms are the ones lib/x509 verifies: ecdsa_secp256r1_sha256,
+# Signature algorithms are the ones x509 verifies: ecdsa_secp256r1_sha256,
 # ecdsa_secp384r1_sha384, rsa_pss_rsae_sha256/384/512, and
 # rsa_pkcs1_sha256/384/512 (certificates, and TLS 1.2 ServerKeyExchange).
 # For 1.2 also ec_point_formats (uncompressed), extended_master_secret and an
@@ -181,7 +182,7 @@ def sh_ems(+sh: List<&2, U32>) -> Bool:
 
 # HelloRetryRequest has this fixed "random" (4.1.3).
 def is_hrr(+sh: List<&2, U32>) -> Bool:
-  Poly.eq_bytes(slice(sh, 6, 32), Hmac.unhex("cf21ad74e59a6111be1d8c021e65b891c2a211167abb8c5e079e09e2c8a8339c"))
+  Suite.eq_bytes(slice(sh, 6, 32), Hmac.unhex("cf21ad74e59a6111be1d8c021e65b891c2a211167abb8c5e079e09e2c8a8339c"))
 
 # ---- records (5) -----------------------------------------------------------------
 
@@ -204,16 +205,16 @@ def is_suite(+suite: U32) -> Bool:
 def seal_go(gcm: Bool, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>, +pt: List<&2, U32>) -> List<&2, U32>:
   match gcm:
     case True{}:
-      Gcm.seal(key, nonce, aad, pt)
+      Suite.gcm_seal(key, nonce, aad, pt)
     case False{}:
-      Poly.seal(key, nonce, aad, pt)
+      Suite.chacha_seal(key, nonce, aad, pt)
 
 def open_go(gcm: Bool, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>, +ct: List<&2, U32>) -> Maybe<&2, List<&2, U32>>:
   match gcm:
     case True{}:
-      Gcm.open(key, nonce, aad, ct)
+      Suite.gcm_open(key, nonce, aad, ct)
     case False{}:
-      Poly.open(key, nonce, aad, ct)
+      Suite.chacha_open(key, nonce, aad, ct)
 
 def seal(+key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>, +pt: List<&2, U32>) -> List<&2, U32>:
   seal_go(U32.is_eq(len(key), 16), key, nonce, aad, pt)

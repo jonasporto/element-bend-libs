@@ -10,8 +10,8 @@ import ./cookie.bend as Ck
 # request, read raw bytes until the server closes, parse, and follow up to
 # 5 redirects. Over the byte cap is a loud error, never a partial page.
 #
-# https:// runs over lib/tls (TLS 1.3 in pure Bend) and authenticates the
-# server with lib/x509 against the system CA bundle. `trust` is the store
+# https:// runs over tls (TLS 1.3 in pure Bend) and authenticates the
+# server with x509 against the system CA bundle. `trust` is the store
 # (Tls.Store): Unverified is a caller's explicit opt-out, which skips
 # that check: an explicit opt-out for debugging, never a silent fallback.
 #

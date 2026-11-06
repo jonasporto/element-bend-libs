@@ -1,6 +1,6 @@
 import Base
 import ./deflate_rgb.bend as Rgb
-import element-compress@0.1.0.0/checksum.bend as Ck
+import element-compress@0.1.0.1/checksum.bend as Ck
 
 # PNG encoders (ISO/IEC 15948, RFC 2083) for 8-bit RGB images, in pure Bend:
 # png uses stored deflate blocks (RFC 1951 3.2.4); compact uses RGB runs
@@ -12,7 +12,7 @@ import element-compress@0.1.0.0/checksum.bend as Ck
 def pick(c: Bool, a: U32, b: U32) -> U32:
   Bool.pick(U32, c, a, b)
 
-# ---- CRC-32 and Adler-32 (lib/compress/checksum.bend) -------------------------
+# ---- CRC-32 and Adler-32 (compress/checksum.bend) -------------------------
 
 def crc32(+bs: List<&2, U32>) -> U32:
   Ck.crc32(bs)

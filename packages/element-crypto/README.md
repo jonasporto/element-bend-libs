@@ -3,8 +3,11 @@
 SHA-1/2, HMAC, HKDF, AES-128-GCM, ChaCha20-Poly1305, X25519, P-256 ECDH, ECDSA and RSA verification.
 
 ```bend
-import element-crypto@0.1.0.0/package.bend as Crypto
+import element-crypto@0.1.0.0/hash.bend as Hash
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.
@@ -25,6 +28,8 @@ anything specific to it.
 - `ecdsa.bend`
 - `ecdh.bend`
 - `rsa.bend`
+- `suite_ours.bend`
+- `suite.bend`
 
 ## Depends on
 

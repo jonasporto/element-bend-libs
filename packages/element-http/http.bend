@@ -1,5 +1,5 @@
 import Base
-import element-compress@0.1.0.0/gzip.bend as Gzip
+import element-compress@0.1.0.1/gzip.bend as Gzip
 import element-rfc3986@0.1.0.0/url.bend as Url
 import element-text@0.1.0.0/utf8.bend as U
 
@@ -53,7 +53,7 @@ def accept_line(+extra: String) -> String:
 # `ua` replaces the User-Agent when not empty; `extra` is header lines
 # ("Name: value\r\n" each) sent as given (CDP's setExtraHTTPHeaders).
 # `conn` is the Connection header: "close", or "keep-alive" for a request
-# that goes out through lib/tls/io.bend's pool.
+# that goes out through tls/io.bend's pool.
 def request_with(+conn: String, +host: String, +method: String, +target: String, +cookie: String, +ctype: String, +body: String, +ua: String, +extra: String) -> String:
   method ++ " " ++ target ++ " HTTP/1.1\r\nHost: " ++ host ++
   "\r\nUser-Agent: " ++ Bool.pick(String, String.is_empty(ua), default_ua(), ua) ++ "\r\n" ++ accept_line(extra) ++ "Accept-Encoding: gzip, deflate\r\nConnection: " ++ conn ++ "\r\n" ++ extra ++
@@ -469,7 +469,7 @@ def fr_done(fr: Fr) -> Bool:
 
 # Element asks for Accept-Encoding: gzip, deflate (since 2026-10-27; it
 # asked for identity before, and python.org compressed anyway, curl
-# confirms). A gzip, x-gzip or deflate body is decoded (lib/compress; the
+# confirms). A gzip, x-gzip or deflate body is decoded (compress; the
 # trailer's checksum verified); bytes Element cannot decode (br, zstd, a
 # corrupt stream) are not a page: the response is refused, never shown as
 # text. The headers stay as sent (Content-Encoding and Content-Length

@@ -3,8 +3,11 @@
 A TLS 1.3 client (and TLS 1.2 for older servers) as a pure state machine, sans-IO.
 
 ```bend
-import element-tls13@0.1.0.0/package.bend as Tls13
+import element-tls13@0.1.0.0/client.bend as Client
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

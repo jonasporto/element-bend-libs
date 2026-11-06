@@ -3,8 +3,11 @@
 DER reading (X.690): TLVs, OIDs, BIT STRINGs, UTCTime and GeneralizedTime.
 
 ```bend
-import element-asn1@0.1.0.0/package.bend as Asn1
+import element-asn1@0.1.0.0/der.bend as Der
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

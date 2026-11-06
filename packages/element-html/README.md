@@ -1,10 +1,13 @@
 # element-html
 
-An HTML parser as the HTML Standard: the tokenizer, tree construction, entities, serialization.
+An HTML parser after the WHATWG algorithm: the full tokenizer, tree construction reduced to what server-rendered pages need, all 2231 named entities, serialization.
 
 ```bend
-import element-html@0.1.0.0/package.bend as Html
+import element-html@0.1.0.0/parse.bend as Parse
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.
@@ -26,6 +29,13 @@ anything specific to it.
 ## Native code
 
 Pure Bend: no `.c` or `.js` files.
+
+## Not modelled yet
+
+Tree construction is the WHATWG algorithm reduced to what server-rendered
+pages need: implied html/head/body, void elements, implied end tags. Not yet:
+the adoption agency algorithm (misnested formatting tags), foster parenting in
+tables, `<template>` contents, foreign content (SVG, MathML).
 
 ## Versions
 

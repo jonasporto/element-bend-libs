@@ -3,8 +3,11 @@
 DEFLATE inflate (RFC 1951), zlib and gzip framing, CRC-32 and Adler-32.
 
 ```bend
-import element-compress@0.1.0.0/package.bend as Compress
+import element-compress@0.1.0.1/gzip.bend as Gzip
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

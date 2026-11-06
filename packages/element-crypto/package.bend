@@ -14,3 +14,5 @@ import ./x25519.bend as X25519
 import ./ecdsa.bend as Ecdsa
 import ./ecdh.bend as Ecdh
 import ./rsa.bend as Rsa
+import ./suite_ours.bend as Suite_ours
+import ./suite.bend as Suite

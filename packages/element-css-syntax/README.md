@@ -3,8 +3,11 @@
 A style sheet split into rules and declarations, as CSS Syntax 3, without interpreting them.
 
 ```bend
-import element-css-syntax@0.1.0.0/package.bend as Css_syntax
+import element-css-syntax@0.1.0.0/parse.bend as Parse
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

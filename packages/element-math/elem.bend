@@ -8,14 +8,14 @@ import ./consts.bend as C
 # these to LLVM libc's correctly rounded math; Node's older fdlibm differs on
 # 1-17% of inputs, so Chrome, not Node, is the oracle).
 #
-# Ziv's strategy on lib/math/f64.bend's exact naturals: the value is
+# Ziv's strategy on math/f64.bend's exact naturals: the value is
 # computed in fixed point with p fraction bits (a natural scaled by 2^p)
 # with a bound on its error; when value - err and value + err round to the
 # same double, that double is the answer. Otherwise p grows (128, 256,
 # 512); past that the answer is None and the caller refuses. Terms of
 # either sign go to two natural accumulators, subtracted at the end.
-# Constants (ln 2, pi/2, 2/pi) come from lib/math/consts.bend, generated
-# exactly by Element's gen_math_consts.py. Algorithms prototyped in Python and
+# Constants (ln 2, pi/2, 2/pi) come from math/consts.bend, generated
+# exactly by a generator script. Algorithms prototyped in Python and
 # checked against headless Chrome on 20020 inputs each (0 different).
 
 type Acc is Data:
@@ -47,7 +47,7 @@ def mul_p(+a: List<&2, U32>, +b: List<&2, U32>, +p: U32) -> List<&2, U32>:
 def div_n(+a: List<&2, U32>, +d: U32) -> List<&2, U32>:
   F64.q_of(F64.n_divmod(a, F64.n_of(d)))
 
-# a constant of lib/math/consts.bend with p fraction bits
+# a constant of math/consts.bend with p fraction bits
 def c_at(+c: List<&2, U32>, +p: U32) -> List<&2, U32>:
   +bb = C.b()
   F64.n_shr(c, (bb - p : U32))

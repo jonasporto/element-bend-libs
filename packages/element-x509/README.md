@@ -3,8 +3,11 @@
 X.509 certificates: PEM, parsing, host names, validity, path building to a root.
 
 ```bend
-import element-x509@0.1.0.0/package.bend as X509
+import element-x509@0.1.0.0/cert.bend as Cert
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

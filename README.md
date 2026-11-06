@@ -6,7 +6,7 @@ specific to it. Each directory under `packages/` is one BendHub package.
 
 | Package | What it does | Native code |
 |---|---|---|
-| `element-html` | HTML parser as the HTML Standard: tokenizer, tree construction, entities, serialization | none |
+| `element-html` | HTML parser after the WHATWG algorithm: the full tokenizer, tree construction reduced to what server-rendered pages need (no adoption agency, foster parenting, `<template>` or foreign content yet), entities, serialization | none |
 | `element-css-syntax` | A style sheet split into rules and declarations (CSS Syntax 3) | none |
 | `element-rfc3986` | URLs as RFC 3986: parse, resolve, remove dot segments | none |
 | `element-tls13` | TLS 1.3 client (and TLS 1.2), a pure state machine | none |
@@ -22,14 +22,17 @@ specific to it. Each directory under `packages/` is one BendHub package.
 | `element-http` | HTTP/1.1 client over TCP and TLS: chunked, gzip, redirects, cookies, DNS | C and JS, DNS only |
 
 ```bend
-import element-html@0.1.0.0/package.bend as Html
+import element-html@0.1.0.0/parse.bend as Parse
 ```
+
+Import the module you use (`parse.bend`, `utf8.bend`, `url.bend`, ...):
+`package.bend` only gathers a package's modules for the hub.
 
 ## How they are checked
 
 Every package runs inside Element and is held by its test suites: the HTML
 parser against html5lib-tests, the URL parser against all 42 examples of
-RFC 3986 §5.4, TLS against live servers and RFC 8448's trace, the crypto
+RFC 3986 §5.4, TLS against RFC 8448's trace, the crypto
 against RFC and NIST vectors, binary64 against V8. Before the first publish
 they were also compared, once, with the hub's other packages on neutral
 sets: Wycheproof for HMAC, AES-GCM, ChaCha20-Poly1305 and X25519 (every

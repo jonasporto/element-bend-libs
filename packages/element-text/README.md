@@ -3,8 +3,11 @@
 UTF-8 decoding with U+FFFD recovery, Latin-1, charset sniffing, base64, JSON.
 
 ```bend
-import element-text@0.1.0.0/package.bend as Text
+import element-text@0.1.0.0/utf8.bend as Utf8
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.

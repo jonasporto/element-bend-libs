@@ -1,4 +1,5 @@
 import Base
+import element-crypto@0.1.0.0/suite.bend as Suite
 import element-crypto@0.1.0.0/hmac.bend as Hmac
 import element-crypto@0.1.0.0/sha256.bend as Sha256
 import element-crypto@0.1.0.0/poly1305.bend as Poly
@@ -7,7 +8,7 @@ import ./tls13.bend as T
 
 # TLS 1.2 (RFC 5246), the pure half, for servers that do not speak TLS 1.3:
 # the PRF, the key schedule with the extended master secret (RFC 7627),
-# ECDHE over x25519 or P-256 (RFC 8422; P-256 in lib/crypto/ecdh.bend), and record protection for the two AEADs
+# ECDHE over x25519 or P-256 (RFC 8422; P-256 in crypto/ecdh.bend), and record protection for the two AEADs
 # Element has: AES-128-GCM (RFC 5288, an 8-byte explicit nonce in each
 # record) and ChaCha20-Poly1305 (RFC 7905, the nonce as in TLS 1.3). As in
 # tls13.bend, the AEAD follows the key length: 16 bytes is GCM.
@@ -36,8 +37,8 @@ def p_hash(n: Nat, +secret: List<&2, U32>, +seed: List<&2, U32>, +a: List<&2, U3
     case 0n:
       Nil{}
     case 1n+k:
-      +a1 = Hmac.hmac(secret, a)
-      List.append(&2, U32, Hmac.hmac(secret, List.append(&2, U32, a1, seed)), p_hash(k, secret, seed, a1))
+      +a1 = Suite.hmac(secret, a)
+      List.append(&2, U32, Suite.hmac(secret, List.append(&2, U32, a1, seed)), p_hash(k, secret, seed, a1))
 
 def prf(+secret: List<&2, U32>, +label: String, +seed: List<&2, U32>, +n: U32) -> List<&2, U32>:
   +ls = List.append(&2, U32, T.ascii(label), seed)
@@ -48,7 +49,7 @@ def prf(+secret: List<&2, U32>, +label: String, +seed: List<&2, U32>, +n: U32) -
 def master_secret(ems: Bool, +pms: List<&2, U32>, +cr: List<&2, U32>, +sr: List<&2, U32>, +transcript: List<&2, U32>) -> List<&2, U32>:
   match ems:
     case True{}:
-      prf(pms, "extended master secret", Sha256.digest(transcript), 48)
+      prf(pms, "extended master secret", Suite.digest(transcript), 48)
     case False{}:
       prf(pms, "master secret", List.append(&2, U32, cr, sr), 48)
 
@@ -75,7 +76,7 @@ def server_iv(+kb: List<&2, U32>, +suite: U32) -> List<&2, U32>:
 
 # 7.4.9: Finished is PRF(master, label, Hash(handshake messages))[0..12]
 def verify_data(+ms: List<&2, U32>, +label: String, +transcript: List<&2, U32>) -> List<&2, U32>:
-  prf(ms, label, Sha256.digest(transcript), 12)
+  prf(ms, label, Suite.digest(transcript), 12)
 
 # ---- handshake messages ----------------------------------------------------------------
 
@@ -135,7 +136,7 @@ def client_key_exchange(+pub: List<&2, U32>) -> List<&2, U32>:
 # RFC 8446 4.1.3: a TLS 1.3 client that is answered with TLS 1.2 must check
 # that the server random does not end in "DOWNGRD" 01 (a downgrade attack).
 def downgraded(+sr: List<&2, U32>) -> Bool:
-  Poly.eq_bytes(T.slice(sr, 24, 8), Hmac.unhex("444f574e47524401"))
+  Suite.eq_bytes(T.slice(sr, 24, 8), Hmac.unhex("444f574e47524401"))
 
 # ---- records (6.2.3.3) ----------------------------------------------------------------
 
@@ -150,9 +151,9 @@ def seal_go(gcm: Bool, +key: List<&2, U32>, +iv: List<&2, U32>, +seq: U32, +typ:
   match gcm:
     case True{}:
       +explicit = seq64(seq)
-      List.append(&2, U32, explicit, Gcm.seal(key, List.append(&2, U32, iv, explicit), aad(seq, typ, T.len(content)), content))
+      List.append(&2, U32, explicit, Suite.gcm_seal(key, List.append(&2, U32, iv, explicit), aad(seq, typ, T.len(content)), content))
     case False{}:
-      Poly.seal(key, T.nonce(iv, seq), aad(seq, typ, T.len(content)), content)
+      Suite.chacha_seal(key, T.nonce(iv, seq), aad(seq, typ, T.len(content)), content)
 
 # A whole protected record of type `typ` (the type stays visible in 1.2).
 def protect(+key: List<&2, U32>, +iv: List<&2, U32>, +seq: U32, +typ: U32, +content: List<&2, U32>) -> List<&2, U32>:
@@ -169,9 +170,9 @@ def open_go(gcm: Bool, +key: List<&2, U32>, +iv: List<&2, U32>, +seq: U32, +typ:
   match gcm:
     case True{}:
       +ct = List.drop(&2, U32, body, 8n)
-      Gcm.open(key, List.append(&2, U32, iv, List.take(&2, U32, body, 8n)), aad(seq, typ, (T.len(ct) - 16 : U32)), ct)
+      Suite.gcm_open(key, List.append(&2, U32, iv, List.take(&2, U32, body, 8n)), aad(seq, typ, (T.len(ct) - 16 : U32)), ct)
     case False{}:
-      Poly.open(key, T.nonce(iv, seq), aad(seq, typ, (T.len(body) - 16 : U32)), body)
+      Suite.chacha_open(key, T.nonce(iv, seq), aad(seq, typ, (T.len(body) - 16 : U32)), body)
 
 def opened_if(long: Bool, gcm: Bool, +key: List<&2, U32>, +iv: List<&2, U32>, +seq: U32, +typ: U32, +body: List<&2, U32>) -> Maybe<&2, List<&2, U32>>:
   match long:

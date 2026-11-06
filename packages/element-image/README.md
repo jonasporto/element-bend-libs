@@ -3,8 +3,11 @@
 PNG encoder for 8-bit RGB: stored and fixed-Huffman deflate.
 
 ```bend
-import element-image@0.1.0.0/package.bend as Image
+import element-image@0.1.0.1/png.bend as Png
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.
@@ -16,7 +19,7 @@ anything specific to it.
 
 ## Depends on
 
-- `element-compress@0.1.0.0`
+- `element-compress@0.1.0.1`
 
 ## Native code
 

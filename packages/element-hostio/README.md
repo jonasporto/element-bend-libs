@@ -3,8 +3,11 @@
 Host effects Base lacks: arguments, binary output, the wall clock, a loopback listener.
 
 ```bend
-import element-hostio@0.1.0.0/package.bend as Hostio
+import element-hostio@0.1.0.0/args.bend as Args
 ```
+
+Import the module you use: `package.bend` only gathers the modules for the
+hub, and exposes no names of its own.
 
 Written for Element, a browser engine for agents in Bend 2, and kept free of
 anything specific to it.
