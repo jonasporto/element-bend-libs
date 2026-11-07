@@ -1,6 +1,6 @@
 import Base
 import element-compress@0.1.0.1/gzip.bend as Gzip
-import element-rfc3986@0.1.0.0/url.bend as Url
+import element-rfc3986@0.1.0.1/url.bend as Url
 import element-text@0.1.0.0/utf8.bend as U
 
 # K3.2 HTTP/1.1 client, the pure half: build a request, parse a response from

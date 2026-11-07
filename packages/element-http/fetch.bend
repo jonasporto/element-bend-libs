@@ -1,6 +1,6 @@
 import Base
 import ./sock.bend as Sock
-import element-rfc3986@0.1.0.0/url.bend as Url
+import element-rfc3986@0.1.0.1/url.bend as Url
 import ./http.bend as Http
 import element-text@0.1.0.0/utf8.bend as U
 import ./io.bend as Tls

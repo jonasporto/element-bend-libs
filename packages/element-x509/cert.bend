@@ -262,8 +262,7 @@ def check_ec(k: Key, +h: Hash.Hash, +sig: List<&2, U32>, +msg: List<&2, U32>) ->
     case KRsa{n, e}:
       False{}
     case KEc{curve, point}:
-      +rs = Der.decode(sig)
-      Ecdsa.verify_point(curve, h, point, Der.body(Der.kid(rs, 0n)), Der.body(Der.kid(rs, 1n)), msg)
+      Ecdsa.verify_der(curve, h, point, sig, msg)
     case KNone{}:
       False{}
 

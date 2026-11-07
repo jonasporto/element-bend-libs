@@ -26,6 +26,12 @@ anything specific to it.
 - `gcm.bend`
 - `fe25519.bend`
 - `x25519.bend`
+- `fep256.bend`
+- `fep384.bend`
+- `fen256.bend`
+- `fen384.bend`
+- `ecp256.bend`
+- `ecp384.bend`
 - `ecdsa.bend`
 - `ecdh.bend`
 - `rsa.bend`
@@ -54,8 +60,8 @@ Pure Bend: no `.c` or `.js` files.
 
 `LAWS.bend` holds 3 laws over this package, closed equalities from the
 standards it follows; `bend PROOF.bend` in this directory checks them. They
-are not imported by `package.bend`, so importing the package does not check
-them again. Laws for every input are the next phase (F = 2).
+ship with the package and are imported only by `package.bend`, so importing a
+module does not check them again. Laws for every input are the next phase (F = 2).
 
 ## Versions
 
@@ -67,4 +73,4 @@ fix, speed gain or new proof.
 
 ## Licence
 
-Apache-2.0. See `LICENSE` and `NOTICE`.
+Apache-2.0. See `LICENSE`; `NOTICE` is in the source repository.

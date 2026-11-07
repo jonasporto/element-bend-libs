@@ -2,3 +2,4 @@
 import Base
 import ./pem.bend as Pem
 import ./cert.bend as Cert
+import ./PROOF.bend as Proof

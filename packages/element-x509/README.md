@@ -28,12 +28,20 @@ anything specific to it.
 
 Pure Bend: no `.c` or `.js` files.
 
+## Known issues
+
+- Not audited.
+- Not checked: revocation (CRL, OCSP), certificate transparency, root expiry,
+  keyUsage.
+- `nameConstraints` is not read: when critical it fails closed, like any
+  unknown critical extension; when not critical it is ignored.
+
 ## Laws
 
 `LAWS.bend` holds 1 laws over this package, closed equalities from the
 standards it follows; `bend PROOF.bend` in this directory checks them. They
-are not imported by `package.bend`, so importing the package does not check
-them again. Laws for every input are the next phase (F = 2).
+ship with the package and are imported only by `package.bend`, so importing a
+module does not check them again. Laws for every input are the next phase (F = 2).
 
 ## Versions
 
@@ -45,4 +53,4 @@ fix, speed gain or new proof.
 
 ## Licence
 
-Apache-2.0. See `LICENSE` and `NOTICE`.
+Apache-2.0. See `LICENSE`; `NOTICE` is in the source repository.

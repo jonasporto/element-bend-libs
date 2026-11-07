@@ -2,17 +2,47 @@ import Base
 import element-math@0.1.0.0/big.bend as Big
 import ./hash.bend as Hash
 import ./hmac.bend as Hmac
+import ./ecp256.bend as E256
+import ./ecp384.bend as E384
 
 # ECDSA signature verification (FIPS 186-5 6.4.2, SEC 1 4.1.4) on the NIST
-# curves P-256 and P-384, y^2 = x^3 - 3x + b over GF(p). Field elements live
-# in Montgomery form; points in Jacobian coordinates (X, Y, Z) with the point
-# at infinity as Z = 0, doubling by dbl-2001-b and addition by add-2007-bl
-# from the Explicit-Formulas Database. u1 G + u2 Q is one joint
-# double-and-add pass (Shamir's trick). Verification only: no secret ever
-# enters this file, so nothing here needs to be constant time.
+# curves P-256 and P-384, y^2 = x^3 - 3x + b over GF(p). It runs in
+# ./ecp256.bend and ./ecp384.bend, made by Element's field generator over
+# generated Montgomery fields (13-bit limbs in a record of U32): the point
+# arithmetic mod p (Jacobian, dbl-2001-b and add-2007-bl, u1 G + u2 Q in one
+# joint pass, Shamir's trick) and the scalars mod n (s^-1, e s^-1, r s^-1).
+# This file checks lengths, truncates the digest and picks the curve.
+# Verification only: no secret ever enters this file, so nothing here needs
+# to be constant time.
+#
+# The list-limb point code below (BigCurve, verify_big) is what this
+# replaced on 2026-11-06, kept for the differential test in crypto_vectors
+# until the generated one has run in Element for a while.
+
+type Field is Data:
+  FP256{}
+  FP384{}
 
 type Curve is Data:
-  Curve{f: Big.Mod, q: Big.Mod, b: List<&2, U32>, gx: List<&2, U32>, gy: List<&2, U32>, size: Nat}
+  Curve{fld: Field, size: Nat}
+
+def p256() -> Curve:
+  Curve{FP256{}, 32n}
+
+def p384() -> Curve:
+  Curve{FP384{}, 48n}
+
+def verify_rs(fld: Field, +qx: List<&2, U32>, +qy: List<&2, U32>, +r: List<&2, U32>, +s: List<&2, U32>, +e: List<&2, U32>) -> Bool:
+  match fld:
+    case FP256{}:
+      E256.verify_rs(qx, qy, r, s, e)
+    case FP384{}:
+      E384.verify_rs(qx, qy, r, s, e)
+
+# ---- the list-limb curve (verify_big) -----------------------------------------------
+
+type BigCurve is Data:
+  BigCurve{f: Big.Mod, q: Big.Mod, b: List<&2, U32>, gx: List<&2, U32>, gy: List<&2, U32>, size: Nat}
 
 type Pt is Data:
   Pt{x: List<&2, U32>, y: List<&2, U32>, z: List<&2, U32>}
@@ -20,11 +50,11 @@ type Pt is Data:
 def num(+s: String) -> List<&2, U32>:
   Big.from_bytes(Hmac.unhex(s))
 
-def curve(+p: String, +b: String, +n: String, +gx: String, +gy: String, +size: Nat) -> Curve:
+def curve(+p: String, +b: String, +n: String, +gx: String, +gy: String, +size: Nat) -> BigCurve:
   +f = Big.modulus_of_bytes(Hmac.unhex(p))
-  Curve{f, Big.modulus_of_bytes(Hmac.unhex(n)), Big.to_mont(f, num(b)), Big.to_mont(f, num(gx)), Big.to_mont(f, num(gy)), size}
+  BigCurve{f, Big.modulus_of_bytes(Hmac.unhex(n)), Big.to_mont(f, num(b)), Big.to_mont(f, num(gx)), Big.to_mont(f, num(gy)), size}
 
-def p256() -> Curve:
+def p256_big() -> BigCurve:
   curve(
     "ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
     "5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b",
@@ -33,7 +63,7 @@ def p256() -> Curve:
     "4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5",
     32n)
 
-def p384() -> Curve:
+def p384_big() -> BigCurve:
   curve(
     "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff",
     "b3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aef",
@@ -155,7 +185,7 @@ def joint(b1s: List<&2, Bool>, b2s: List<&2, Bool>, +f: Big.Mod, +g: Pt, +q: Pt,
         case Con{b2, t2}:
           joint(t1, t2, f, g, q, gq, pick_add(b1, b2, f, dbl(f, acc), g, q, gq))
 
-# ---- verification ----------------------------------------------------------------
+# ---- shared by both ------------------------------------------------------------
 
 def drop_zeros(bs: List<&2, U32>) -> List<&2, U32>:
   match bs:
@@ -192,10 +222,32 @@ def is_inf(p: Pt) -> Bool:
     case Pt{x, y, z}:
       Big.is_zero(z)
 
+# ---- verification on the generated fields ---------------------------------------
+
 # Verify (r, s) over msg with the public point (qx, qy); all big-endian bytes.
 def verify(c: Curve, +h: Hash.Hash, +qx: List<&2, U32>, +qy: List<&2, U32>, +r_b: List<&2, U32>, +s_b: List<&2, U32>, +msg: List<&2, U32>) -> Bool:
   match c:
-    case Curve{+f, +q, +b, +gx, +gy, +size}:
+    case Curve{+fld, +size}:
+      +e = List.take(&2, U32, Hash.digest(h, msg), size)
+      fits(size, r_b) && fits(size, s_b) && fits(size, qx) && fits(size, qy) && verify_rs(fld, qx, qy, r_b, s_b, e)
+
+def curve_size(c: Curve) -> Nat:
+  match c:
+    case Curve{fld, size}:
+      size
+
+# The public key as an uncompressed SEC 1 point: 04 || X || Y.
+def verify_point(+c: Curve, +h: Hash.Hash, +point: List<&2, U32>, +r: List<&2, U32>, +s: List<&2, U32>, +msg: List<&2, U32>) -> Bool:
+  +size = curve_size(c)
+  U32.is_eq(Big.nth(point, 0n), 4) && Nat.is_eq(List.length(&2, U32, point), Nat.add(Nat.mul(size, 2n), 1n)) &&
+    verify(c, h, List.take(&2, U32, List.drop(&2, U32, point, 1n), size), List.drop(&2, U32, point, Nat.add(size, 1n)), r, s, msg)
+
+# ---- verification on the list-limb curve ----------------------------------------
+
+# Verify (r, s) over msg with the public point (qx, qy); all big-endian bytes.
+def verify_big(c: BigCurve, +h: Hash.Hash, +qx: List<&2, U32>, +qy: List<&2, U32>, +r_b: List<&2, U32>, +s_b: List<&2, U32>, +msg: List<&2, U32>) -> Bool:
+  match c:
+    case BigCurve{+f, +q, +b, +gx, +gy, +size}:
       +r = limbs(q, r_b)
       +s = limbs(q, s_b)
       +x = limbs(f, qx)
@@ -216,13 +268,46 @@ def verify(c: Curve, +h: Hash.Hash, +qx: List<&2, U32>, +qy: List<&2, U32>, +r_b
         in_range(q, r) && in_range(q, s) && Big.lt(x, Big.n_of(f)) && Big.lt(y, Big.n_of(f)) &&
         on_curve(f, b, xm, ym) && Bool.not(is_inf(sum)) && Big.eq(reduce_once(q, x_of(f, sum)), r)
 
-def curve_size(c: Curve) -> Nat:
+def big_curve_size(c: BigCurve) -> Nat:
   match c:
-    case Curve{f, q, b, gx, gy, size}:
+    case BigCurve{f, q, b, gx, gy, size}:
       size
 
-# The public key as an uncompressed SEC 1 point: 04 || X || Y.
-def verify_point(+c: Curve, +h: Hash.Hash, +point: List<&2, U32>, +r: List<&2, U32>, +s: List<&2, U32>, +msg: List<&2, U32>) -> Bool:
-  +size = curve_size(c)
+def verify_point_big(+c: BigCurve, +h: Hash.Hash, +point: List<&2, U32>, +r: List<&2, U32>, +s: List<&2, U32>, +msg: List<&2, U32>) -> Bool:
+  +size = big_curve_size(c)
   U32.is_eq(Big.nth(point, 0n), 4) && Nat.is_eq(List.length(&2, U32, point), Nat.add(Nat.mul(size, 2n), 1n)) &&
-    verify(c, h, List.take(&2, U32, List.drop(&2, U32, point, 1n), size), List.drop(&2, U32, point, Nat.add(size, 1n)), r, s, msg)
+    verify_big(c, h, List.take(&2, U32, List.drop(&2, U32, point, 1n), size), List.drop(&2, U32, point, Nat.add(size, 1n)), r, s, msg)
+
+# ---- the signature in DER ---------------------------------------------------------
+
+def len(+bs: List<&2, U32>) -> Nat:
+  List.length(&2, U32, bs)
+
+# A DER INTEGER's content is minimal and non-negative (X.690 8.3.2): at least
+# one byte, the first below 0x80, and no leading 00 unless the next byte needs it.
+def der_int_ok(+v: List<&2, U32>) -> Bool:
+  +b0 = Big.nth(v, 0n)
+  +b1 = Big.nth(v, 1n)
+  Nat.is_ge(len(v), 1n) && (b0 < 128 : U32) && Bool.not(U32.is_zero(b0) && Nat.is_ge(len(v), 2n) && (b1 < 128 : U32))
+
+# ECDSA-Sig-Value (RFC 5480 2.2.3, SEC 1 C.5) in strict DER: SEQUENCE {
+# INTEGER r, INTEGER s } and nothing after it, every length in short form (a
+# P-256 or P-384 signature is under 128 bytes, so a long form is never
+# minimal), both integers minimal. BER, extra bytes and other tags are
+# refused, as Wycheproof's ecdsa_*_test.json requires.
+def der_sig_ok(+sig: List<&2, U32>, +r: List<&2, U32>, +t: List<&2, U32>, +s: List<&2, U32>) -> Bool:
+  +l = Big.nth(sig, 1n)
+  +lr = Big.nth(sig, 3n)
+  +ls = Big.nth(t, 1n)
+  U32.is_eq(Big.nth(sig, 0n), 48) && (l < 128 : U32) && Nat.is_eq(len(sig), Nat.add(U32.to_nat(l), 2n)) &&
+    U32.is_eq(Big.nth(sig, 2n), 2) && (lr < 128 : U32) && Nat.is_eq(len(r), U32.to_nat(lr)) &&
+    U32.is_eq(Big.nth(t, 0n), 2) && (ls < 128 : U32) && Nat.is_eq(len(s), U32.to_nat(ls)) &&
+    der_int_ok(r) && der_int_ok(s)
+
+# verify_point with (r, s) as a DER ECDSA-Sig-Value (X.509 and TLS signatures).
+def verify_der(+c: Curve, +h: Hash.Hash, +point: List<&2, U32>, +sig: List<&2, U32>, +msg: List<&2, U32>) -> Bool:
+  +lr = U32.to_nat(Big.nth(sig, 3n))
+  +r = List.take(&2, U32, List.drop(&2, U32, sig, 4n), lr)
+  +t = List.drop(&2, U32, sig, Nat.add(4n, lr))
+  +s = List.drop(&2, U32, t, 2n)
+  der_sig_ok(sig, r, t, s) && verify_point(c, h, point, r, s, msg)

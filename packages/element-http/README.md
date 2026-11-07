@@ -28,7 +28,7 @@ anything specific to it.
 - `element-compress@0.1.0.1`
 - `element-crypto@0.1.0.0`
 - `element-hostio@0.1.0.0`
-- `element-rfc3986@0.1.0.0`
+- `element-rfc3986@0.1.0.1`
 - `element-text@0.1.0.0`
 - `element-tls13@0.1.0.0`
 - `element-x509@0.1.0.0`
@@ -37,12 +37,17 @@ anything specific to it.
 
 This package carries native code: `effs/net_resolve.c`, `effs/net_resolve.js`. It is host IO only (DNS, the clock, binary output), with a C and a JS twin each; no parsing or cryptography is native.
 
+## Known issues
+
+- Not audited. HTTPS here rests on `element-tls13` and `element-x509`, and
+  carries their known issues.
+
 ## Laws
 
 `LAWS.bend` holds 14 laws over this package, closed equalities from the
 standards it follows; `bend PROOF.bend` in this directory checks them. They
-are not imported by `package.bend`, so importing the package does not check
-them again. Laws for every input are the next phase (F = 2).
+ship with the package and are imported only by `package.bend`, so importing a
+module does not check them again. Laws for every input are the next phase (F = 2).
 
 ## Versions
 
@@ -54,4 +59,4 @@ fix, speed gain or new proof.
 
 ## Licence
 
-Apache-2.0. See `LICENSE` and `NOTICE`.
+Apache-2.0. See `LICENSE`; `NOTICE` is in the source repository.

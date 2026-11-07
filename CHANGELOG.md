@@ -27,5 +27,10 @@ is a new version.
 
 - element-crypto: X25519 over a 20-limb record field (`fe25519.bend`),
   about 200x faster than the list version; an all-zero shared secret is
-  refused.
+  refused. P-256 and P-384 on generated Montgomery fields (13-bit limbs in
+  `U32` records); ECDSA signatures in strict DER (the old parser accepted 34
+  invalid Wycheproof signatures per curve).
 - element-tls13: refuses an all-zero X25519 secret (RFC 8446 7.4.2).
+- element-x509, element-http: their READMEs state what they do not check.
+- element-crypto, element-x509, element-http: `package.bend` imports
+  `PROOF.bend`, so the laws reach the hub.

@@ -7,3 +7,4 @@ import ./session.bend as Session
 import ./websocket.bend as Websocket
 import ./io.bend as Io
 import ./fetch.bend as Fetch
+import ./PROOF.bend as Proof

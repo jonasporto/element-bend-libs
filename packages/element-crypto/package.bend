@@ -12,8 +12,15 @@ import ./poly1305.bend as Poly1305
 import ./gcm.bend as Gcm
 import ./fe25519.bend as Fe25519
 import ./x25519.bend as X25519
+import ./fep256.bend as Fep256
+import ./fep384.bend as Fep384
+import ./fen256.bend as Fen256
+import ./fen384.bend as Fen384
+import ./ecp256.bend as Ecp256
+import ./ecp384.bend as Ecp384
 import ./ecdsa.bend as Ecdsa
 import ./ecdh.bend as Ecdh
 import ./rsa.bend as Rsa
 import ./suite_ours.bend as Suite_ours
 import ./suite.bend as Suite
+import ./PROOF.bend as Proof
