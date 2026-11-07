@@ -3,7 +3,7 @@
 URLs as RFC 3986: parse, resolve against a base, remove dot segments, recompose.
 
 ```bend
-import element-rfc3986@0.1.0.0/url.bend as Url
+import element-rfc3986@0.1.0.1/url.bend as Url
 ```
 
 Import the module you use: `package.bend` only gathers the modules for the
@@ -28,8 +28,8 @@ Pure Bend: no `.c` or `.js` files.
 
 `LAWS.bend` holds 2 laws over this package, closed equalities from the
 standards it follows; `bend PROOF.bend` in this directory checks them. They
-are not imported by `package.bend`, so importing the package does not check
-them again. Laws for every input are the next phase (F = 2).
+ship with the package and are imported only by `package.bend`, so importing a
+module does not check them again. Laws for every input are the next phase (F = 2).
 
 ## Versions
 
@@ -41,4 +41,4 @@ fix, speed gain or new proof.
 
 ## Licence
 
-Apache-2.0. See `LICENSE` and `NOTICE`.
+Apache-2.0. See `LICENSE`; `NOTICE` is in the source repository.

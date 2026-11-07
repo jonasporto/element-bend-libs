@@ -20,6 +20,8 @@ is a new version.
   `<pre>`, `<listing>` or `<textarea>` is not text (HTML Standard 13.2.6.4.7).
 - element-css-syntax 0.1.0.0: first version, with backslash escapes inside
   strings.
+- element-rfc3986 0.1.0.1, element-css-syntax 0.1.0.1: `package.bend` imports
+  `PROOF.bend`, so the laws reach the hub; the code is unchanged.
 
 ## Next (in this repository, not yet on the hub)
 
