@@ -12,10 +12,18 @@ is a new version.
   live in `checksum.bend`).
 - element-image 0.1.0.0, then 0.1.0.1 (imports element-compress 0.1.0.1).
 
+## 2026-11-06
+
+- element-math 0.1.0.0, element-hostio 0.1.0.0, element-rfc3986 0.1.0.0:
+  first versions.
+- element-html 0.1.0.0: first version; a newline right after the start tag of
+  `<pre>`, `<listing>` or `<textarea>` is not text (HTML Standard 13.2.6.4.7).
+- element-css-syntax 0.1.0.0: first version, with backslash escapes inside
+  strings.
+
 ## Next (in this repository, not yet on the hub)
 
 - element-crypto: X25519 over a 20-limb record field (`fe25519.bend`),
   about 200x faster than the list version; an all-zero shared secret is
   refused.
 - element-tls13: refuses an all-zero X25519 secret (RFC 8446 7.4.2).
-- element-css-syntax: backslash escapes inside strings.

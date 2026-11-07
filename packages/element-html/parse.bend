@@ -291,8 +291,29 @@ def text_in(+b: B, +s: String) -> B:
     Bool.pick(B, String.eq(top_tag(stack_of(b)), "body") && Bool.not(in_body_of(b)), append(enter_body(b), Dom.TextNode{s, 0}),
       append(b, Dom.TextNode{s, 0})))
 
-def on_text(+b: B, +s: String) -> B:
-  after_text(text_in(b, s), s)
+# A newline right after <pre>, <listing> or <textarea>'s start tag is not
+# text (13.2.6.4.7: "if the next token is a U+000A LINE FEED, ignore it"):
+# the text is that element's first child. It was kept, and innerText of
+# <pre>\nline</pre> read "\nline" (Chrome: "line").
+def frame_fresh(xs: List<&2, Frame>) -> Bool:
+  match xs:
+    case Nil{}:
+      False{}
+    case Con{f, t}:
+      match f:
+        case Frame{+tag, attrs, kids, head}:
+          List.is_empty(&2, Dom.Node, kids) && (String.eq(tag, "pre") || String.eq(tag, "listing") || String.eq(tag, "textarea"))
+
+def lf_dropped(drop: Bool, +s: String) -> String:
+  match drop:
+    case True{}:
+      String.drop(s, 1n)
+    case False{}:
+      s
+
+def on_text(+b: B, +s0: String) -> B:
+  +s = lf_dropped(frame_fresh(stack_of(b)) && String.starts_with(s0, "\n"), s0)
+  Bool.pick(B, String.is_empty(s), b, after_text(text_in(b, s), s))
 
 # A comment goes where the parser is (see cm): the open element in body,
 # head in head; one at document or <html> level is dropped.
