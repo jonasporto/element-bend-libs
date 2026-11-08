@@ -23,6 +23,14 @@ is a new version.
 - element-rfc3986 0.1.0.1, element-css-syntax 0.1.0.1: `package.bend` imports
   `PROOF.bend`, so the laws reach the hub; the code is unchanged.
 
+## 2026-11-07
+
+- element-crypto 0.1.0.0: SHA-1/2, HMAC, HKDF, AES-128-GCM, ChaCha20-Poly1305,
+  X25519 on a 20-limb field, P-256 and P-384 on generated Montgomery fields,
+  ECDSA in strict DER, RSA verification; its laws ship with it. Not audited.
+- element-x509 0.1.0.0, element-tls13 0.1.0.0, element-http 0.1.0.0: first
+  versions; each README states what it does not check. Not audited.
+
 ## Next (in this repository, not yet on the hub)
 
 - element-crypto: X25519 over a 20-limb record field (`fe25519.bend`),
